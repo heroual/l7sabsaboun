@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Card } from './Card';
-import { SparklesIcon, AgentIcon, PaperAirplaneIcon } from './icons';
 import { ChatMessage } from '../types';
 import { getPublicFinancialAdvice } from '../services/geminiService';
-
 
 const initialSuggestions = [
     "كيفاش ندير ميزانية؟",
@@ -39,10 +36,13 @@ export const PublicChat: React.FC = () => {
             setChatHistory(prev => [...prev, { type: 'agent', text: result.responseMessage }]);
             if (result.suggestions && result.suggestions.length > 0) {
                 setSuggestions(result.suggestions);
+            } else {
+                setSuggestions(initialSuggestions); // fallback suggestions
             }
         } catch(error) {
             console.error(error);
             setChatHistory(prev => [...prev, { type: 'agent', text: 'سمح ليا، ماقدرتش نفهم. عاود بطريقة أخرى.' }]);
+            setSuggestions(initialSuggestions);
         } finally {
             setIsLoading(false);
         }
@@ -56,46 +56,63 @@ export const PublicChat: React.FC = () => {
     };
 
     return (
-        <Card title="جرب تهضر مع لحساب صابون" icon={<SparklesIcon className="h-7 w-7 text-teal-500" />}>
-            <div className="h-96 flex flex-col">
-                <div className="flex-grow overflow-y-auto p-4 pr-0">
-                    <div className="space-y-4">
-                        {chatHistory.map((msg, index) => (
-                        <div key={index} className={`flex items-end gap-2 ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                            {msg.type === 'agent' && <AgentIcon className="h-8 w-8 text-teal-500 flex-shrink-0" />}
-                            <div className={`max-w-[80%] p-3 rounded-2xl shadow-sm ${msg.type === 'user' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-slate-200 text-slate-800 rounded-bl-none'}`}>
-                            <p className="break-words text-sm">{msg.text}</p>
-                            </div>
-                        </div>
-                        ))}
-                        <div ref={chatEndRef} />
-                    </div>
-                </div>
-                <div className="flex-shrink-0 pt-2">
-                    {suggestions.length > 0 && !isLoading && (
-                        <div className="flex flex-wrap gap-2 mb-2 justify-center">
-                            {suggestions.map((s, i) => (
-                                <button key={i} onClick={() => handleUserInput(s)} className="px-3 py-1.5 text-xs font-semibold text-teal-700 bg-teal-100 rounded-full hover:bg-teal-200 transition">
-                                    {s}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                    <form onSubmit={onFormSubmit} className="flex gap-2">
-                        <input
-                        type="text"
-                        value={userInput}
-                        onChange={(e) => setUserInput(e.target.value)}
-                        placeholder={isLoading ? 'كيفكر...' : 'كتب سؤالك هنا...'}
-                        disabled={isLoading}
-                        className="w-full px-4 py-3 rounded-full border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
-                        />
-                        <button type="submit" disabled={isLoading || !userInput.trim()} className="bg-teal-500 text-white rounded-full p-3 hover:bg-teal-600 disabled:bg-slate-300 transition-all duration-200 transform disabled:scale-100 hover:scale-105 active:scale-95">
-                        <PaperAirplaneIcon className="h-6 w-6" />
-                        </button>
-                    </form>
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md p-6 sm:p-8 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-majorelle-blue dark:text-white">جرب تهضر مع لحساب صابون</h2>
+                <div className="w-10 h-10 bg-brand-gold/20 dark:bg-brand-gold/30 rounded-full flex items-center justify-center">
+                    <span className="material-icons text-brand-gold text-xl">smart_toy</span>
                 </div>
             </div>
-        </Card>
+
+            <div className="space-y-4 mb-6 h-64 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                {chatHistory.map((msg, index) => (
+                    <div key={index} className={`flex gap-3 items-start ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        {msg.type === 'agent' && (
+                            <div className="w-8 h-8 bg-sandy-beige dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full flex items-center justify-center shrink-0">
+                                <span className="material-symbols-outlined text-slate-600 dark:text-slate-300 text-lg">support_agent</span>
+                            </div>
+                        )}
+                        <div className={`p-3 rounded-lg shadow-sm max-w-[85%] ${msg.type === 'user' 
+                            ? 'bg-majorelle-blue text-white rounded-bl-none' 
+                            : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-tr-none'}`
+                        }>
+                            <p className="text-sm break-words">{msg.text}</p>
+                        </div>
+                         {msg.type === 'user' && (
+                            <div className="w-8 h-8 bg-primary/10 dark:bg-primary/20 border border-slate-200 dark:border-slate-600 rounded-full flex items-center justify-center shrink-0">
+                                <span className="material-symbols-outlined text-primary dark:text-green-300 text-lg">person</span>
+                            </div>
+                        )}
+                    </div>
+                ))}
+                <div ref={chatEndRef} />
+            </div>
+
+            {!isLoading && suggestions.length > 0 && (
+                <div className="flex flex-wrap gap-2 justify-start mb-6">
+                    {suggestions.map((s, i) => (
+                        <button key={i} onClick={() => handleUserInput(s)} className="text-xs sm:text-sm bg-primary/10 dark:bg-primary/20 text-primary font-medium py-1.5 px-3 rounded-full hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors">
+                            {s}
+                        </button>
+                    ))}
+                </div>
+            )}
+            
+            <form onSubmit={onFormSubmit} className="relative">
+                <input 
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-1 focus:ring-primary rounded-full py-3 pr-12 pl-4 text-slate-800 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-400 transition-colors" 
+                    placeholder={isLoading ? "كيفكر..." : "كتب سؤالك هنا..."} 
+                    type="text"
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    disabled={isLoading}
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                  <button type="submit" disabled={isLoading || !userInput.trim()} className="text-slate-400 dark:text-slate-500 hover:text-primary disabled:text-slate-300 transition-colors p-1">
+                    <span className="material-icons">send</span>
+                  </button>
+                </div>
+            </form>
+        </div>
     );
 };

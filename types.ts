@@ -27,8 +27,46 @@ export interface Expense {
 export interface Goal {
   name:string;
   targetAmount: number;
-  savedAmount: number;
+  savedAmount: number; // Total accumulated savings
   durationMonths: number;
+}
+
+export enum RecurrenceType {
+  MONTHLY = 'شهري',
+  YEARLY = 'سنوي',
+}
+
+export interface RecurringBill {
+  id: string;
+  name: string;
+  amount: number;
+  category: ExpenseCategory;
+  recurrenceType: RecurrenceType;
+  dayOfMonth?: number; // For monthly
+  month?: number; // For yearly (1-12)
+  day?: number; // for yearly (1-31)
+  lastAddedDate?: string; // ISO string to track last time it was converted to an expense
+}
+
+export interface RecurringIncome {
+  id: string;
+  name: string;
+  amount: number;
+  recurrenceType: RecurrenceType;
+  dayOfMonth?: number; // For monthly
+  month?: number; // For yearly (1-12)
+  day?: number; // for yearly (1-31)
+  lastAddedDate?: string; // ISO string to track last time it was converted to an income
+}
+
+export interface MonthlyRecord {
+  month: number; // 0-11
+  year: number;
+  totalIncome: number;
+  totalExpenses: number;
+  savings: number;
+  incomeSources: IncomeSource[];
+  expenses: Expense[];
 }
 
 export type ChatMessage = {
@@ -37,9 +75,14 @@ export type ChatMessage = {
 };
 
 export interface FinanceState {
-  incomeSources: IncomeSource[];
-  expenses: Expense[];
+  incomeSources: IncomeSource[]; // Current month's income
+  expenses: Expense[]; // Current month's expenses
   goal: Goal | null;
+  recurringBills: RecurringBill[];
+  recurringIncomes: RecurringIncome[];
+  history: MonthlyRecord[];
+  lastActiveMonth: number;
+  lastActiveYear: number;
 }
 
 export type UserData = {

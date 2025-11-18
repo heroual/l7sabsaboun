@@ -29,10 +29,14 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ expenses }) => {
     
     const total = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-    const byCategory = monthlyExpenses.reduce((acc, e) => {
-      acc[e.category] = (acc[e.category] || 0) + e.amount;
-      return acc;
+    const byCategory = Object.values(ExpenseCategory).reduce((acc, category) => {
+        acc[category] = 0;
+        return acc;
     }, {} as Record<ExpenseCategory, number>);
+
+    monthlyExpenses.forEach(e => {
+        byCategory[e.category] += e.amount;
+    });
 
     return { total, byCategory };
   }, [expenses, currentMonth, currentYear]);
@@ -79,7 +83,6 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ expenses }) => {
                 <p className="text-xl font-bold text-red-600">{monthlyData.total.toFixed(2)} درهم</p>
             </div>
             <div className="space-y-3">
-                {/* FIX: Cast the result of Object.entries to ensure correct type inference for amount. */}
                 {(Object.entries(monthlyData.byCategory) as [string, number][]).sort(([,a], [,b]) => b - a).map(([category, amount]) => (
                     <div key={category}>
                         <div className="flex justify-between text-sm mb-1">
@@ -91,7 +94,7 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ expenses }) => {
                         </div>
                     </div>
                 ))}
-                {Object.keys(monthlyData.byCategory).length === 0 && <p className="text-sm text-slate-400 text-center py-4">مازال ما صرفتي والو هاد الشهر.</p>}
+                {monthlyData.total === 0 && <p className="text-sm text-slate-400 text-center py-4">مازال ما صرفتي والو هاد الشهر.</p>}
             </div>
           </div>
         );

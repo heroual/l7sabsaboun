@@ -29,10 +29,16 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+const now = new Date();
 const defaultInitialState: FinanceState = {
   incomeSources: [],
   expenses: [],
   goal: null,
+  recurringBills: [],
+  recurringIncomes: [],
+  history: [],
+  lastActiveMonth: now.getMonth(),
+  lastActiveYear: now.getFullYear(),
 };
 
 const defaultChatHistory: ChatMessage[] = [
@@ -60,7 +66,23 @@ export const getOrCreateUserDocument = async (userAuth: User): Promise<UserData 
             return null;
         }
     }
-    return userSnapshot.data() as UserData;
+    const userData = userSnapshot.data() as UserData;
+    // Backwards compatibility for users
+    if (!userData.financeState.recurringBills) {
+        userData.financeState.recurringBills = [];
+    }
+    if (!userData.financeState.recurringIncomes) {
+        userData.financeState.recurringIncomes = [];
+    }
+    if (!userData.financeState.history) {
+        userData.financeState.history = [];
+    }
+    if (userData.financeState.lastActiveMonth === undefined || userData.financeState.lastActiveYear === undefined) {
+        const rightNow = new Date();
+        userData.financeState.lastActiveMonth = rightNow.getMonth();
+        userData.financeState.lastActiveYear = rightNow.getFullYear();
+    }
+    return userData;
 };
 
 
