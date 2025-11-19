@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { ChartBarIcon, SparklesIcon, TrashIcon, WalletIcon, PaperAirplaneIcon, PencilIcon, PlusCircleIcon, AgentIcon, CalendarDaysIcon } from './components/icons';
 import { Card } from './components/Card';
@@ -8,6 +9,7 @@ import { auth, onAuthStateChangedListener, signOut, getOrCreateUserDocument, upd
 import LandingPage from './components/LandingPage';
 import AuthForm from './components/AuthForm';
 import AnalysisCard from './components/AnalysisCard';
+import { SmartSalarySplitter } from './components/SmartSalarySplitter';
 
 // MODAL COMPONENTS
 
@@ -44,20 +46,10 @@ interface ExpenseModalProps {
 }
 
 const ExpenseModal: React.FC<ExpenseModalProps> = ({ isOpen, onClose, onSave, expense }) => {
-    const [name, setName] = useState('');
-    const [amount, setAmount] = useState('');
-    const [category, setCategory] = useState(ExpenseCategory.DAILY);
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-
-    useEffect(() => {
-        if(isOpen) {
-            setName(expense?.name || '');
-            setAmount(expense?.amount?.toString() || '');
-            setCategory(expense?.category || ExpenseCategory.DAILY);
-            setDate(expense?.date ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0]);
-        }
-    }, [isOpen, expense]);
-
+    const [name, setName] = useState(expense?.name || '');
+    const [amount, setAmount] = useState(expense?.amount?.toString() || '');
+    const [category, setCategory] = useState(expense?.category || ExpenseCategory.OTHER);
+    const [date, setDate] = useState(expense?.date ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -112,15 +104,6 @@ const IncomeModal: React.FC<IncomeModalProps> = ({ isOpen, onClose, onSave, inco
     const [amount, setAmount] = useState(income?.amount?.toString() || '');
     const [date, setDate] = useState(income?.date ? income.date.split('T')[0] : new Date().toISOString().split('T')[0]);
 
-    useEffect(() => {
-        if(isOpen) {
-            setName(income?.name || '');
-            setAmount(income?.amount?.toString() || '');
-            setDate(income?.date ? income.date.split('T')[0] : new Date().toISOString().split('T')[0]);
-        }
-    }, [isOpen, income]);
-
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if(!name.trim() || !amount || Number(amount) <= 0) return;
@@ -167,14 +150,6 @@ const GoalModal: React.FC<GoalModalProps> = ({ isOpen, onClose, onSave, goal }) 
     const [name, setName] = useState(goal?.name || '');
     const [targetAmount, setTargetAmount] = useState(goal?.targetAmount?.toString() || '');
     const [durationMonths, setDurationMonths] = useState(goal?.durationMonths?.toString() || '');
-    
-     useEffect(() => {
-        if(isOpen) {
-            setName(goal?.name || '');
-            setTargetAmount(goal?.targetAmount?.toString() || '');
-            setDurationMonths(goal?.durationMonths?.toString() || '');
-        }
-    }, [isOpen, goal]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -219,25 +194,13 @@ interface RecurringBillModalProps {
 }
 
 const RecurringBillModal: React.FC<RecurringBillModalProps> = ({ isOpen, onClose, onSave, bill }) => {
-    const [name, setName] = useState('');
-    const [amount, setAmount] = useState('');
-    const [category, setCategory] = useState(ExpenseCategory.MONTHLY_BILLS);
-    const [recurrenceType, setRecurrenceType] = useState(RecurrenceType.MONTHLY);
-    const [dayOfMonth, setDayOfMonth] = useState('1');
-    const [month, setMonth] = useState('1');
-    const [day, setDay] = useState('1');
-
-    useEffect(() => {
-        if (isOpen) {
-            setName(bill?.name || '');
-            setAmount(bill?.amount?.toString() || '');
-            setCategory(bill?.category || ExpenseCategory.MONTHLY_BILLS);
-            setRecurrenceType(bill?.recurrenceType || RecurrenceType.MONTHLY);
-            setDayOfMonth(bill?.dayOfMonth?.toString() || '1');
-            setMonth(bill?.month?.toString() || '1');
-            setDay(bill?.day?.toString() || '1');
-        }
-    }, [isOpen, bill]);
+    const [name, setName] = useState(bill?.name || '');
+    const [amount, setAmount] = useState(bill?.amount?.toString() || '');
+    const [category, setCategory] = useState(bill?.category || ExpenseCategory.BILLS);
+    const [recurrenceType, setRecurrenceType] = useState(bill?.recurrenceType || RecurrenceType.MONTHLY);
+    const [dayOfMonth, setDayOfMonth] = useState(bill?.dayOfMonth?.toString() || '1');
+    const [month, setMonth] = useState(bill?.month?.toString() || '1');
+    const [day, setDay] = useState(bill?.day?.toString() || '1');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -322,23 +285,12 @@ interface RecurringIncomeModalProps {
 }
 
 const RecurringIncomeModal: React.FC<RecurringIncomeModalProps> = ({ isOpen, onClose, onSave, income }) => {
-    const [name, setName] = useState('');
-    const [amount, setAmount] = useState('');
-    const [recurrenceType, setRecurrenceType] = useState(RecurrenceType.MONTHLY);
-    const [dayOfMonth, setDayOfMonth] = useState('1');
-    const [month, setMonth] = useState('1');
-    const [day, setDay] = useState('1');
-
-    useEffect(() => {
-        if (isOpen) {
-            setName(income?.name || '');
-            setAmount(income?.amount?.toString() || '');
-            setRecurrenceType(income?.recurrenceType || RecurrenceType.MONTHLY);
-            setDayOfMonth(income?.dayOfMonth?.toString() || '1');
-            setMonth(income?.month?.toString() || '1');
-            setDay(income?.day?.toString() || '1');
-        }
-    }, [isOpen, income]);
+    const [name, setName] = useState(income?.name || '');
+    const [amount, setAmount] = useState(income?.amount?.toString() || '');
+    const [recurrenceType, setRecurrenceType] = useState(income?.recurrenceType || RecurrenceType.MONTHLY);
+    const [dayOfMonth, setDayOfMonth] = useState(income?.dayOfMonth?.toString() || '1');
+    const [month, setMonth] = useState(income?.month?.toString() || '1');
+    const [day, setDay] = useState(income?.day?.toString() || '1');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -420,20 +372,20 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, record }) 
     if (!isOpen || !record) return null;
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`تقرير شهر ${monthNames[record.month]} ${record.year}`}>
+        <Modal isOpen={isOpen} onClose={onClose} title={`تقرير شهر ${monthNames[record.month] || ''} ${record.year}`}>
             <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-2 text-center p-3 bg-slate-50 rounded-lg">
                     <div>
                         <p className="text-xs text-slate-500">الدخل</p>
-                        <p className="font-bold text-green-600">{record.totalIncome.toFixed(2)}</p>
+                        <p className="font-bold text-green-600">{Number(record.totalIncome).toFixed(2)}</p>
                     </div>
                     <div>
                         <p className="text-xs text-slate-500">المصاريف</p>
-                        <p className="font-bold text-red-600">{record.totalExpenses.toFixed(2)}</p>
+                        <p className="font-bold text-red-600">{Number(record.totalExpenses).toFixed(2)}</p>
                     </div>
                     <div>
                         <p className="text-xs text-slate-500">التوفير</p>
-                        <p className={`font-bold ${record.savings >= 0 ? 'text-slate-800' : 'text-red-600'}`}>{record.savings.toFixed(2)}</p>
+                        <p className={`font-bold ${record.savings >= 0 ? 'text-slate-800' : 'text-red-600'}`}>{Number(record.savings).toFixed(2)}</p>
                     </div>
                 </div>
 
@@ -444,8 +396,8 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, record }) 
                             <ul className="space-y-1 text-sm">
                                 {record.incomeSources.map(inc => (
                                     <li key={inc.id} className="flex justify-between p-1.5 rounded bg-green-50">
-                                        <span>{inc.name}</span>
-                                        <span className="font-semibold text-green-700">{inc.amount.toFixed(2)}</span>
+                                        <span>{String(inc.name)}</span>
+                                        <span className="font-semibold text-green-700">{Number(inc.amount).toFixed(2)}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -458,8 +410,8 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, record }) 
                             <ul className="space-y-1 text-sm">
                                 {record.expenses.map(exp => (
                                     <li key={exp.id} className="flex justify-between p-1.5 rounded bg-red-50">
-                                        <span>{exp.name} ({exp.category})</span>
-                                        <span className="font-semibold text-red-700">{exp.amount.toFixed(2)}</span>
+                                        <span>{String(exp.name)} ({exp.category})</span>
+                                        <span className="font-semibold text-red-700">{Number(exp.amount).toFixed(2)}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -503,7 +455,8 @@ const ChatInterface: React.FC<{
                   <div key={index} className={`flex items-end gap-2 ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                       {msg.type === 'agent' && <AgentIcon className="h-8 w-8 text-teal-500 flex-shrink-0" />}
                       <div className={`max-w-[80%] p-3 rounded-2xl shadow-sm ${msg.type === 'user' ? 'bg-blue-500 text-white rounded-br-none' : 'bg-slate-200 text-slate-800 rounded-bl-none'}`}>
-                      <p className="break-words text-sm">{msg.text}</p>
+                      {/* Defensive coding: Enforce string conversion here to prevent Object rendering crashes */}
+                      <p className="break-words text-sm">{String(msg.text || '')}</p>
                       </div>
                   </div>
                   ))}
@@ -513,11 +466,16 @@ const ChatInterface: React.FC<{
           <div className="flex-shrink-0 pt-2 px-4 pb-4">
               {suggestions.length > 0 && !isLoading && (
                   <div className="flex flex-wrap gap-2 mb-2 justify-center">
-                      {suggestions.map((s, i) => (
-                          <button key={i} onClick={() => handleUserInput(s)} className="px-3 py-1.5 text-xs font-semibold text-teal-700 bg-teal-100 rounded-full hover:bg-teal-200 transition">
-                              {s}
-                          </button>
-                      ))}
+                      {suggestions.map((s, i) => {
+                          // Strict sanitization for rendering suggestions. Even stricter check here.
+                          const safeS = (typeof s === 'string' || typeof s === 'number') ? String(s) : '';
+                          if (!safeS) return null;
+                          return (
+                            <button key={i} onClick={() => handleUserInput(safeS)} className="px-3 py-1.5 text-xs font-semibold text-teal-700 bg-teal-100 rounded-full hover:bg-teal-200 transition">
+                                {safeS}
+                            </button>
+                          );
+                      })}
                   </div>
               )}
               <form onSubmit={onFormSubmit} className="flex gap-2">
@@ -558,6 +516,65 @@ const ChatInterface: React.FC<{
     </Card>
   );
 };
+
+
+// HELPER COMPONENTS
+const ExpenseList: React.FC<{ expenses: Expense[]; title: string; onEdit: (expense: Expense) => void; onDelete: (id: string) => void; }> = ({ expenses, title, onEdit, onDelete }) => (
+    <div>
+      <h4 className="font-semibold text-slate-700 mt-4 mb-2">{title}</h4>
+      {expenses.length > 0 ? (
+        <ul className="space-y-2 text-sm">
+          {expenses.map(exp => (
+            <li key={exp.id} className="flex justify-between items-center p-2 rounded-md bg-slate-50 group">
+              <div>
+                  <span>{String(exp.name)}</span>
+                  <span className="text-xs text-slate-400 block">{exp.category} - {new Date(exp.date).toLocaleDateString('ar-MA')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                  <span className="font-semibold text-red-500">{Number(exp.amount).toFixed(2)} درهم</span>
+                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => onEdit(exp)} className="text-slate-400 hover:text-blue-600">
+                          <PencilIcon className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => onDelete(exp.id)} className="text-slate-400 hover:text-red-600">
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                  </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="text-sm text-slate-400">ماكاين والو هنا.</p>}
+    </div>
+);
+  
+const IncomeList: React.FC<{ incomes: IncomeSource[]; onEdit: (income: IncomeSource) => void; onDelete: (id: string) => void; }> = ({ incomes, onEdit, onDelete }) => (
+    <div>
+      {incomes.length > 0 ? (
+        <ul className="space-y-2 text-sm">
+          {incomes.map(inc => (
+            <li key={inc.id} className="flex justify-between items-center p-2 rounded-md bg-slate-50 group">
+              <div>
+                  <span>{String(inc.name)}</span>
+                  <span className="text-xs text-slate-400 block">{new Date(inc.date).toLocaleDateString('ar-MA')}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                  <span className="font-semibold text-green-500">{Number(inc.amount).toFixed(2)} درهم</span>
+                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => onEdit(inc)} className="text-slate-400 hover:text-blue-600">
+                          <PencilIcon className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => onDelete(inc.id)} className="text-slate-400 hover:text-red-600">
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                  </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="text-sm text-slate-400">ماكاين حتى مدخول.</p>}
+    </div>
+);
 
 
 // MAIN APP COMPONENT
@@ -624,8 +641,11 @@ const checkForNewMonthAndArchive = (currentState: FinanceState): FinanceState =>
         const newHistory = [...(currentState.history || []), newRecord];
         
         let updatedGoal = currentState.goal;
-        if (updatedGoal && savings > 0) {
-            updatedGoal.savedAmount = (updatedGoal.savedAmount || 0) + savings;
+        if (currentState.goal && savings > 0) {
+             updatedGoal = {
+                ...currentState.goal,
+                savedAmount: (currentState.goal.savedAmount || 0) + savings,
+            };
         }
 
         return {
@@ -673,6 +693,8 @@ const App: React.FC = () => {
   
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [selectedMonthRecord, setSelectedMonthRecord] = useState<MonthlyRecord | null>(null);
+  
+  const [isSmartSplitterOpen, setIsSmartSplitterOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChangedListener(async (user) => {
@@ -731,6 +753,13 @@ const App: React.FC = () => {
     try {
       const result = await getFinancialUpdate(currentInput, financeState);
       
+      const safeName = (val: any) => {
+          if (typeof val === 'string') return val;
+          if (typeof val === 'number') return String(val);
+          if (typeof val === 'object') return JSON.stringify(val);
+          return 'بدون اسم';
+      }
+
       setFinanceState(prevState => {
         let newState = { ...prevState };
         switch (result.action) {
@@ -738,7 +767,9 @@ const App: React.FC = () => {
             const newIncomePayload = (result.payload as { incomeSource: Omit<IncomeSource, 'id' | 'date'> }).incomeSource;
             if(newIncomePayload) {
               const newIncomeSource: IncomeSource = {
-                ...newIncomePayload,
+                // Explicitly construct object to sanitise potential non-primitive types from Gemini
+                name: safeName(newIncomePayload.name),
+                amount: Number(newIncomePayload.amount) || 0,
                 id: new Date().toISOString() + Math.random(),
                 date: new Date().toISOString(),
               };
@@ -748,8 +779,17 @@ const App: React.FC = () => {
           case GeminiAction.ADD_EXPENSE:
             const newExpensePayload = (result.payload as { expense: Omit<Expense, 'id' | 'date'> }).expense;
             if(newExpensePayload) {
+              // Validate category
+              let category = ExpenseCategory.OTHER;
+              if (newExpensePayload.category && typeof newExpensePayload.category === 'string' && Object.values(ExpenseCategory).includes(newExpensePayload.category as ExpenseCategory)) {
+                  category = newExpensePayload.category as ExpenseCategory;
+              }
+
               const newExpense: Expense = {
-                  ...newExpensePayload,
+                  // Explicitly construct object to sanitise potential non-primitive types from Gemini
+                  name: safeName(newExpensePayload.name),
+                  amount: Number(newExpensePayload.amount) || 0,
+                  category: category,
                   id: new Date().toISOString() + Math.random(),
                   date: new Date().toISOString(),
               };
@@ -759,7 +799,13 @@ const App: React.FC = () => {
           case GeminiAction.SET_GOAL:
             const newGoalPayload = (result.payload as { goal: Omit<Goal, 'savedAmount'> }).goal;
              if(newGoalPayload) {
-                 newState.goal = { ...newGoalPayload, savedAmount: prevState.goal?.savedAmount || 0 };
+                 newState.goal = { 
+                    // Explicitly construct object
+                    name: safeName(newGoalPayload.name),
+                    targetAmount: Number(newGoalPayload.targetAmount) || 1000,
+                    durationMonths: Number(newGoalPayload.durationMonths) || 1,
+                    savedAmount: prevState.goal?.savedAmount || 0 
+                };
              }
             break;
            case GeminiAction.DELETE_EXPENSE:
@@ -774,7 +820,13 @@ const App: React.FC = () => {
         return newState;
       });
 
-      setChatHistory(prev => [...prev, { type: 'agent', text: result.responseMessage }]);
+      // STRICTLY sanitize the response text to prevent Objects from causing React Error #310
+      // Gemini sometimes returns a JSON object even for string fields.
+      const sanitizedResponseMessage = typeof result.responseMessage === 'object' 
+          ? JSON.stringify(result.responseMessage) 
+          : String(result.responseMessage || '');
+
+      setChatHistory(prev => [...prev, { type: 'agent', text: sanitizedResponseMessage }]);
       setSuggestions(followUpSuggestions);
     } catch (error) {
       console.error(error);
@@ -802,8 +854,9 @@ const App: React.FC = () => {
     return (currentSaved / financeState.goal.targetAmount) * 100;
   }, [financeState.goal]);
 
-  const getExpensesByCategory = (category: ExpenseCategory) => {
-    return financeState.expenses.filter(e => e.category === category).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const getSortedExpenses = () => {
+    // Simply return all expenses sorted by date, latest first.
+    return [...financeState.expenses].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
   
   const getIncomesSorted = () => {
@@ -1052,63 +1105,6 @@ const App: React.FC = () => {
     }
   }
 
-  const ExpenseList: React.FC<{ expenses: Expense[], title: string }> = ({ expenses, title }) => (
-    <div>
-      <h4 className="font-semibold text-slate-700 mt-4 mb-2">{title}</h4>
-      {expenses.length > 0 ? (
-        <ul className="space-y-2 text-sm">
-          {expenses.map(exp => (
-            <li key={exp.id} className="flex justify-between items-center p-2 rounded-md bg-slate-50 group">
-              <div>
-                  <span>{exp.name}</span>
-                  <span className="text-xs text-slate-400 block">{new Date(exp.date).toLocaleDateString('ar-MA')}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                  <span className="font-semibold text-red-500">{exp.amount.toFixed(2)} درهم</span>
-                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => handleOpenExpenseModal(exp)} className="text-slate-400 hover:text-blue-600">
-                          <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => handleDeleteExpense(exp.id)} className="text-slate-400 hover:text-red-600">
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                  </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : <p className="text-sm text-slate-400">ماكاين والو هنا.</p>}
-    </div>
-  );
-  
-  const IncomeList: React.FC<{ incomes: IncomeSource[] }> = ({ incomes }) => (
-    <div>
-      {incomes.length > 0 ? (
-        <ul className="space-y-2 text-sm">
-          {incomes.map(inc => (
-            <li key={inc.id} className="flex justify-between items-center p-2 rounded-md bg-slate-50 group">
-              <div>
-                  <span>{inc.name}</span>
-                  <span className="text-xs text-slate-400 block">{new Date(inc.date).toLocaleDateString('ar-MA')}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                  <span className="font-semibold text-green-500">{inc.amount.toFixed(2)} درهم</span>
-                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => handleOpenIncomeModal(inc)} className="text-slate-400 hover:text-blue-600">
-                          <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button onClick={() => handleDeleteIncome(inc.id)} className="text-slate-400 hover:text-red-600">
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                  </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : <p className="text-sm text-slate-400">ماكاين حتى مدخول.</p>}
-    </div>
-  );
-
   return (
     <div className="min-h-screen flex flex-col p-4 md:p-8 bg-slate-50 text-slate-800">
       <header className="text-center mb-8 relative">
@@ -1121,6 +1117,21 @@ const App: React.FC = () => {
       
       <main className="flex-grow space-y-6">
         <h2 className="text-2xl font-bold text-center text-slate-700 pt-4 border-t">لوحة التحكم</h2>
+
+        {/* SMART SALARY SPLITTER ENTRY BUTTON */}
+        <div className="flex justify-center mb-6">
+            <button 
+                onClick={() => setIsSmartSplitterOpen(true)}
+                className="bg-[#3e2723] text-yellow-500 hover:text-white px-6 py-3 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-300 border-2 border-yellow-600 flex items-center gap-3 group"
+            >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-300 to-yellow-600 shadow-inner border border-yellow-100 group-hover:animate-spin"></div>
+                <div className="text-right">
+                    <p className="text-xs font-bold opacity-70 uppercase">جديد</p>
+                    <p className="text-lg font-bold">الكناش الدكي لتقسيم الصالير</p>
+                </div>
+            </button>
+        </div>
+
         <Card title="فلوسك هاد الشهر" icon={<WalletIcon className="h-7 w-7 text-teal-500" />}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
                 <div>
@@ -1147,8 +1158,8 @@ const App: React.FC = () => {
                             {dueRecurringIncomes.map(income => (
                                 <li key={income.id} className="flex justify-between items-center text-sm">
                                     <div>
-                                        <span className="font-semibold text-slate-700">{income.name}</span>
-                                        <span className="text-slate-500 ms-2">({income.amount.toFixed(2)} درهم)</span>
+                                        <span className="font-semibold text-slate-700">{String(income.name)}</span>
+                                        <span className="text-slate-500 ms-2">({Number(income.amount).toFixed(2)} درهم)</span>
                                     </div>
                                     <button 
                                         onClick={() => handlePrepareDueIncomeForIncome(income)}
@@ -1165,7 +1176,7 @@ const App: React.FC = () => {
                     <PlusCircleIcon className="w-5 h-5" />
                     <span>أضف مدخول</span>
                 </button>
-                <IncomeList incomes={getIncomesSorted()} />
+                <IncomeList incomes={getIncomesSorted()} onEdit={handleOpenIncomeModal} onDelete={handleDeleteIncome} />
             </Card>
             
             <Card title="المصاريف" icon={<ChartBarIcon className="h-7 w-7 text-amber-500" />}>
@@ -1176,8 +1187,8 @@ const App: React.FC = () => {
                             {dueRecurringBills.map(bill => (
                                 <li key={bill.id} className="flex justify-between items-center text-sm">
                                     <div>
-                                        <span className="font-semibold text-slate-700">{bill.name}</span>
-                                        <span className="text-slate-500 ms-2">({bill.amount.toFixed(2)} درهم)</span>
+                                        <span className="font-semibold text-slate-700">{String(bill.name)}</span>
+                                        <span className="text-slate-500 ms-2">({Number(bill.amount).toFixed(2)} درهم)</span>
                                     </div>
                                     <button 
                                         onClick={() => handlePrepareDueBillForExpense(bill)}
@@ -1194,10 +1205,8 @@ const App: React.FC = () => {
                     <PlusCircleIcon className="w-5 h-5" />
                     <span>أضف مصروف</span>
                 </button>
-                <ExpenseList expenses={getExpensesByCategory(ExpenseCategory.DAILY)} title="يومية" />
-                <ExpenseList expenses={getExpensesByCategory(ExpenseCategory.MONTHLY_SHOPPING)} title="تقضية ديال الشهر" />
-                <ExpenseList expenses={getExpensesByCategory(ExpenseCategory.MONTHLY_BILLS)} title="فواتير شهرية" />
-                <ExpenseList expenses={getExpensesByCategory(ExpenseCategory.ANNUAL)} title="سنوية" />
+                {/* Consolidated Expense List sorted by Date */}
+                <ExpenseList expenses={getSortedExpenses()} title="آخر المصاريف" onEdit={handleOpenExpenseModal} onDelete={handleDeleteExpense} />
             </Card>
 
             <Card title="الدخل والمصاريف الثابتة" icon={<CalendarDaysIcon className="h-7 w-7 text-indigo-500" />}>
@@ -1213,8 +1222,8 @@ const App: React.FC = () => {
                                 {financeState.recurringIncomes.map(income => (
                                     <li key={income.id} className="flex justify-between items-center p-2 rounded-md bg-slate-50 group">
                                         <div>
-                                            <span>{income.name}</span>
-                                            <span className="text-xs text-slate-400 block">{income.amount.toFixed(2)} درهم - كل {income.recurrenceType}</span>
+                                            <span>{String(income.name)}</span>
+                                            <span className="text-xs text-slate-400 block">{Number(income.amount).toFixed(2)} درهم - كل {String(income.recurrenceType)}</span>
                                         </div>
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button onClick={() => handleOpenRecurringIncomeModal(income)} className="text-slate-400 hover:text-blue-600"><PencilIcon className="h-4 w-4" /></button>
@@ -1236,8 +1245,8 @@ const App: React.FC = () => {
                                 {financeState.recurringBills.map(bill => (
                                     <li key={bill.id} className="flex justify-between items-center p-2 rounded-md bg-slate-50 group">
                                         <div>
-                                            <span>{bill.name}</span>
-                                            <span className="text-xs text-slate-400 block">{bill.amount.toFixed(2)} درهم - كل {bill.recurrenceType}</span>
+                                            <span>{String(bill.name)}</span>
+                                            <span className="text-xs text-slate-400 block">{Number(bill.amount).toFixed(2)} درهم - كل {String(bill.recurrenceType)}</span>
                                         </div>
                                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button onClick={() => handleOpenRecurringBillModal(bill)} className="text-slate-400 hover:text-blue-600"><PencilIcon className="h-4 w-4" /></button>
@@ -1253,13 +1262,13 @@ const App: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card title="الهدف ديالك" icon={<SparklesIcon className="h-7 w-7 text-violet-500" />}>
+            <Card title="الهدف ديالك" icon={<SparklesIcon className="h-7 w-7 text-violet-500" />} className="transition-all duration-300" id="goal-card">
                 {financeState.goal ? (
                 <div>
                     <div className="flex justify-between items-start">
                         <div>
-                            <h3 className="text-lg font-bold text-slate-800">{financeState.goal.name}</h3>
-                            <p className="text-2xl font-bold text-violet-600 my-2">{financeState.goal.targetAmount.toFixed(2)} درهم</p>
+                            <h3 className="text-lg font-bold text-slate-800">{String(financeState.goal.name)}</h3>
+                            <p className="text-2xl font-bold text-violet-600 my-2">{Number(financeState.goal.targetAmount).toFixed(2)} درهم</p>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={handleOpenGoalModal} className="text-slate-400 hover:text-blue-600 p-1 rounded-full"><PencilIcon className="h-5 w-5"/></button>
@@ -1268,7 +1277,7 @@ const App: React.FC = () => {
                     </div>
                     <div className="my-4">
                     <div className="flex justify-between text-sm mb-1">
-                        <span>لي جمعتي: {(financeState.goal.savedAmount || 0).toFixed(2)} درهم</span>
+                        <span>لي جمعتي: {Number(financeState.goal.savedAmount || 0).toFixed(2)} درهم</span>
                         <span>{goalProgress.toFixed(1)}%</span>
                     </div>
                     <ProgressBar value={goalProgress} colorClass="bg-violet-500"/>
@@ -1308,7 +1317,7 @@ const App: React.FC = () => {
                                     <div className="flex justify-between items-center">
                                         <span className="font-bold">{monthNames[record.month]} {record.year}</span>
                                         <span className={`font-semibold ${record.savings >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                            {record.savings.toFixed(2)} درهم
+                                            {Number(record.savings).toFixed(2)} درهم
                                         </span>
                                     </div>
                                 </button>
@@ -1325,7 +1334,7 @@ const App: React.FC = () => {
       </main>
 
        {/* CHAT POPUP & BUTTON */}
-        <div className="fixed bottom-8 right-8 z-50">
+        <div className="fixed bottom-8 right-8 z-40">
             {isChatOpen ? (
                 <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl flex flex-col transition-all duration-300 ease-out origin-bottom-right">
                     <ChatInterface
@@ -1350,9 +1359,14 @@ const App: React.FC = () => {
             )}
         </div>
 
+      {/* Smart Splitter Fullscreen Modal */}
+      {isSmartSplitterOpen && (
+          <SmartSalarySplitter onClose={() => setIsSmartSplitterOpen(false)} />
+      )}
 
       {isExpenseModalOpen && (
           <ExpenseModal 
+              key={editingExpense?.id || 'new-expense'}
               isOpen={isExpenseModalOpen}
               onClose={handleCloseExpenseModal}
               onSave={handleSaveExpense}
@@ -1361,6 +1375,7 @@ const App: React.FC = () => {
       )}
        {isIncomeModalOpen && (
           <IncomeModal 
+              key={editingIncome?.id || 'new-income'}
               isOpen={isIncomeModalOpen}
               onClose={handleCloseIncomeModal}
               onSave={handleSaveIncome}
@@ -1369,6 +1384,7 @@ const App: React.FC = () => {
       )}
       {isGoalModalOpen && (
           <GoalModal
+              key={financeState.goal?.name || 'new-goal'}
               isOpen={isGoalModalOpen}
               onClose={handleCloseGoalModal}
               onSave={handleSaveGoal}
@@ -1377,6 +1393,7 @@ const App: React.FC = () => {
       )}
       {isRecurringBillModalOpen && (
           <RecurringBillModal
+              key={editingRecurringBill?.id || 'new-rbill'}
               isOpen={isRecurringBillModalOpen}
               onClose={handleCloseRecurringBillModal}
               onSave={handleSaveRecurringBill}
@@ -1385,6 +1402,7 @@ const App: React.FC = () => {
       )}
       {isRecurringIncomeModalOpen && (
           <RecurringIncomeModal
+              key={editingRecurringIncome?.id || 'new-rincome'}
               isOpen={isRecurringIncomeModalOpen}
               onClose={handleCloseRecurringIncomeModal}
               onSave={handleSaveRecurringIncome}

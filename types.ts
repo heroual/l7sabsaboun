@@ -1,12 +1,19 @@
+
 import { Type } from "@google/genai";
 import type { User as FirebaseUser } from "firebase/auth";
 
 
 export enum ExpenseCategory {
-  DAILY = 'يومية',
-  MONTHLY_SHOPPING = 'تقضية ديال الشهر',
-  MONTHLY_BILLS = 'فواتير شهرية',
-  ANNUAL = 'سنوية',
+  RENT = 'كراء',
+  BILLS = 'فواتير',
+  CAR = 'الطموبيل',
+  SHOPPING = 'التقدية',
+  CLOTHES = 'الحوايج',
+  OUTINGS = 'خرجات',
+  LOANS = 'الكريديات',
+  FAMILY = 'العائلة',
+  CHARITY = 'الصدقة',
+  OTHER = 'اخرى',
 }
 
 export interface IncomeSource {
@@ -107,6 +114,7 @@ export interface GeminiResponse {
 
 export { FirebaseUser };
 
+// Schema for the general chatbot
 export const GeminiResponseSchema = {
   type: Type.OBJECT,
   properties: {
@@ -142,10 +150,16 @@ export const GeminiResponseSchema = {
             category: {
               type: Type.STRING,
               enum: [
-                'يومية',
-                'تقضية ديال الشهر',
-                'فواتير شهرية',
-                'سنوية',
+                'كراء',
+                'فواتير',
+                'الطموبيل',
+                'التقدية',
+                'الحوايج',
+                'خرجات',
+                'الكريديات',
+                'العائلة',
+                'الصدقة',
+                'اخرى'
               ],
             },
           },
@@ -195,4 +209,51 @@ export const PublicGeminiResponseSchema = {
     }
   },
   required: ['responseMessage'],
+};
+
+// --- SMART SALARY SPLITTER TYPES ---
+
+export interface BudgetAllocation {
+  category: string;
+  amount: number;
+  percentage: number;
+  isFixed: boolean; // True if it was a user input, False if AI suggested it
+  note?: string; // AI comment e.g., "High for this city"
+}
+
+export interface SmartSplitResponse {
+  allocations: BudgetAllocation[];
+  totalExpenses: number;
+  remaining: number;
+  savingsRecommendation: number;
+  advice: string; // General advice in Darija
+  warnings: string[]; // List of specific warnings
+}
+
+export const SmartSplitResponseSchema = {
+  type: Type.OBJECT,
+  properties: {
+    allocations: {
+      type: Type.ARRAY,
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          category: { type: Type.STRING },
+          amount: { type: Type.NUMBER },
+          percentage: { type: Type.NUMBER },
+          isFixed: { type: Type.BOOLEAN },
+          note: { type: Type.STRING }
+        }
+      }
+    },
+    totalExpenses: { type: Type.NUMBER },
+    remaining: { type: Type.NUMBER },
+    savingsRecommendation: { type: Type.NUMBER },
+    advice: { type: Type.STRING },
+    warnings: { 
+      type: Type.ARRAY,
+      items: { type: Type.STRING }
+    }
+  },
+  required: ['allocations', 'totalExpenses', 'remaining', 'savingsRecommendation', 'advice']
 };

@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ChatMessage } from '../types';
-import { getPublicFinancialAdvice } from '../services/geminiService';
+import { getPublicFinancialAdvice, ensureString } from '../services/geminiService';
 
 const initialSuggestions = [
     "كيفاش ندير ميزانية؟",
@@ -33,9 +34,24 @@ export const PublicChat: React.FC = () => {
 
         try {
             const result = await getPublicFinancialAdvice(currentInput, newHistory);
-            setChatHistory(prev => [...prev, { type: 'agent', text: result.responseMessage }]);
-            if (result.suggestions && result.suggestions.length > 0) {
-                setSuggestions(result.suggestions);
+            
+            // STRICTLY Sanitize response message to prevent Object rendering (React Error #310)
+            // Use the ensureString helper we exported to maintain consistency
+            const safeMessage = ensureString(result.responseMessage);
+
+            setChatHistory(prev => [...prev, { type: 'agent', text: safeMessage }]);
+            
+            // STRICTLY Sanitize suggestions
+            if (result.suggestions && Array.isArray(result.suggestions)) {
+                 const safeSuggestions = result.suggestions
+                    .filter(s => s !== null && s !== undefined)
+                    .map(s => ensureString(s));
+                
+                if (safeSuggestions.length > 0) {
+                    setSuggestions(safeSuggestions);
+                } else {
+                    setSuggestions(initialSuggestions);
+                }
             } else {
                 setSuggestions(initialSuggestions); // fallback suggestions
             }
@@ -76,7 +92,8 @@ export const PublicChat: React.FC = () => {
                             ? 'bg-majorelle-blue text-white rounded-bl-none' 
                             : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-tr-none'}`
                         }>
-                            <p className="text-sm break-words">{msg.text}</p>
+                             {/* Double defense: render text with String() wrapper to catch objects */}
+                            <p className="text-sm break-words">{typeof msg.text === 'object' ? JSON.stringify(msg.text) : String(msg.text)}</p>
                         </div>
                          {msg.type === 'user' && (
                             <div className="w-8 h-8 bg-primary/10 dark:bg-primary/20 border border-slate-200 dark:border-slate-600 rounded-full flex items-center justify-center shrink-0">
@@ -92,7 +109,7 @@ export const PublicChat: React.FC = () => {
                 <div className="flex flex-wrap gap-2 justify-start mb-6">
                     {suggestions.map((s, i) => (
                         <button key={i} onClick={() => handleUserInput(s)} className="text-xs sm:text-sm bg-primary/10 dark:bg-primary/20 text-primary font-medium py-1.5 px-3 rounded-full hover:bg-primary/20 dark:hover:bg-primary/30 transition-colors">
-                            {s}
+                            {typeof s === 'object' ? JSON.stringify(s) : String(s)}
                         </button>
                     ))}
                 </div>
