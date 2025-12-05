@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
-import { Expense, ExpenseCategory } from '../types';
+import { Expense, ExpenseCategory, FinanceState } from '../types';
 import { Card } from './Card';
 import { ChartPieIcon } from './icons';
 
 interface AnalysisCardProps {
-  expenses: Expense[];
+  financeState: FinanceState;
 }
 
 // Map categories to Tailwind Text colors for SVG 'currentColor' usage
@@ -23,9 +23,9 @@ const categoryColorMap: Record<ExpenseCategory, string> = {
   [ExpenseCategory.OTHER]: 'text-gray-400',
 };
 
-const DonutChart: React.FC<{ 
-  data: { category: string; value: number; percent: number; colorClass: string }[]; 
-  total: number 
+const DonutChart: React.FC<{
+  data: { category: string; value: number; percent: number; colorClass: string }[];
+  total: number
 }> = ({ data, total }) => {
   if (total === 0) {
     return (
@@ -45,7 +45,7 @@ const DonutChart: React.FC<{
       <svg viewBox="0 0 40 40" className="w-full h-full transform -rotate-90">
         {/* Background Circle */}
         <circle cx="20" cy="20" r={radius} fill="transparent" stroke="#f1f5f9" strokeWidth="5" />
-        
+
         {/* Segments */}
         {data.map((segment, i) => {
           // Dash array: [length of dash (percent), length of gap (100-percent)]
@@ -82,7 +82,7 @@ const DonutChart: React.FC<{
   );
 };
 
-const AnalysisCard: React.FC<AnalysisCardProps> = ({ expenses }) => {
+const AnalysisCard: React.FC<AnalysisCardProps> = ({ financeState }) => {
   const [view, setView] = useState<'daily' | 'monthly' | 'yearly'>('monthly');
 
   const today = new Date();
@@ -95,110 +95,119 @@ const AnalysisCard: React.FC<AnalysisCardProps> = ({ expenses }) => {
     let filteredExpenses: Expense[] = [];
 
     if (view === 'daily') {
-        filteredExpenses = expenses.filter(e => e.date.startsWith(todayStr));
+      // Daily: only current month expenses for today
+      filteredExpenses = financeState.expenses.filter(e => e.date.startsWith(todayStr));
     } else if (view === 'monthly') {
-        filteredExpenses = expenses.filter(e => {
-            const d = new Date(e.date);
-            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        });
+      // Monthly: current month expenses only
+      filteredExpenses = financeState.expenses;
     } else { // Yearly
-        filteredExpenses = expenses.filter(e => new Date(e.date).getFullYear() === currentYear);
+      // Yearly: aggregate current month + all history for current year
+      filteredExpenses = [...financeState.expenses];
+
+      // Add expenses from history for current year
+      if (financeState.history && financeState.history.length > 0) {
+        financeState.history.forEach(record => {
+          if (record.year === currentYear) {
+            filteredExpenses = [...filteredExpenses, ...record.expenses];
+          }
+        });
+      }
     }
 
     const total = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
 
     const grouped = filteredExpenses.reduce((acc, e) => {
-        acc[e.category] = (acc[e.category] || 0) + e.amount;
-        return acc;
+      acc[e.category] = (acc[e.category] || 0) + e.amount;
+      return acc;
     }, {} as Record<string, number>);
 
     const data = Object.entries(grouped)
-        .map(([category, value]) => ({
-            category,
-            value,
-            percent: total > 0 ? (value / total) * 100 : 0,
-            colorClass: categoryColorMap[category as ExpenseCategory] || 'text-gray-400'
-        }))
-        .sort((a, b) => b.value - a.value); // Sort largest first
+      .map(([category, value]) => ({
+        category,
+        value,
+        percent: total > 0 ? (value / total) * 100 : 0,
+        colorClass: categoryColorMap[category as ExpenseCategory] || 'text-gray-400'
+      }))
+      .sort((a, b) => b.value - a.value); // Sort largest first
 
     return { data, total, filteredExpenses };
-  }, [expenses, view, todayStr, currentMonth, currentYear]);
+  }, [financeState, view, todayStr, currentMonth, currentYear]);
 
-  const getButtonClass = (buttonView: typeof view) => 
+  const getButtonClass = (buttonView: typeof view) =>
     `px-4 py-1.5 text-sm font-semibold rounded-full transition-all ${view === buttonView ? 'bg-teal-500 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
 
   const getTitle = () => {
-      switch(view) {
-          case 'daily': return 'مصاريف اليوم';
-          case 'monthly': return 'مصاريف هاد الشهر';
-          case 'yearly': return 'مصاريف هاد العام';
-      }
+    switch (view) {
+      case 'daily': return 'مصاريف اليوم';
+      case 'monthly': return 'مصاريف هاد الشهر';
+      case 'yearly': return 'مصاريف هاد العام';
+    }
   }
 
   return (
     <Card title="تحليل المصاريف" icon={<ChartPieIcon className="h-7 w-7 text-sky-500" />}>
-        
-        {/* Controls */}
-        <div className="flex justify-center gap-2 mb-6 bg-slate-50 p-1 rounded-full w-fit mx-auto">
-            <button onClick={() => setView('daily')} className={getButtonClass('daily')}>يومي</button>
-            <button onClick={() => setView('monthly')} className={getButtonClass('monthly')}>شهري</button>
-            <button onClick={() => setView('yearly')} className={getButtonClass('yearly')}>سنوي</button>
+
+      {/* Controls */}
+      <div className="flex justify-center gap-2 mb-6 bg-slate-50 p-1 rounded-full w-fit mx-auto">
+        <button onClick={() => setView('daily')} className={getButtonClass('daily')}>يومي</button>
+        <button onClick={() => setView('monthly')} className={getButtonClass('monthly')}>شهري</button>
+        <button onClick={() => setView('yearly')} className={getButtonClass('yearly')}>سنوي</button>
+      </div>
+
+      <div className="flex flex-col md:flex-row items-start gap-8">
+
+        {/* Chart Section */}
+        <div className="w-full md:w-1/3 flex flex-col items-center justify-center">
+          <DonutChart data={chartData.data} total={chartData.total} />
+          <p className="text-center font-bold text-slate-700 mt-4">{getTitle()}</p>
+          <p className="text-center text-slate-500 text-sm">{chartData.total.toFixed(2)} درهم</p>
         </div>
 
-        <div className="flex flex-col md:flex-row items-start gap-8">
-            
-            {/* Chart Section */}
-            <div className="w-full md:w-1/3 flex flex-col items-center justify-center">
-                 <DonutChart data={chartData.data} total={chartData.total} />
-                 <p className="text-center font-bold text-slate-700 mt-4">{getTitle()}</p>
-                 <p className="text-center text-slate-500 text-sm">{chartData.total.toFixed(2)} درهم</p>
+        {/* Legend/List Section */}
+        <div className="w-full md:w-2/3">
+          {chartData.data.length > 0 ? (
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+              {chartData.data.map((item) => (
+                <div key={item.category} className="group">
+                  <div className="flex justify-between items-center mb-1 text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${item.colorClass.replace('text-', 'bg-')}`}></div>
+                      <span className="font-medium text-slate-700">{item.category}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-slate-800 block">{item.value.toFixed(2)}</span>
+                    </div>
+                  </div>
+                  {/* Progress Bar */}
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${item.colorClass.replace('text-', 'bg-')} transition-all duration-500`}
+                      style={{ width: `${item.percent}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-slate-400 text-left mt-0.5 dir-ltr">{item.percent.toFixed(1)}%</p>
+                </div>
+              ))}
             </div>
-
-            {/* Legend/List Section */}
-            <div className="w-full md:w-2/3">
-                 {chartData.data.length > 0 ? (
-                     <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
-                        {chartData.data.map((item) => (
-                             <div key={item.category} className="group">
-                                 <div className="flex justify-between items-center mb-1 text-sm">
-                                     <div className="flex items-center gap-2">
-                                         <div className={`w-3 h-3 rounded-full ${item.colorClass.replace('text-', 'bg-')}`}></div>
-                                         <span className="font-medium text-slate-700">{item.category}</span>
-                                     </div>
-                                     <div className="text-right">
-                                         <span className="font-bold text-slate-800 block">{item.value.toFixed(2)}</span>
-                                     </div>
-                                 </div>
-                                 {/* Progress Bar */}
-                                 <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                                     <div 
-                                        className={`h-full rounded-full ${item.colorClass.replace('text-', 'bg-')} transition-all duration-500`} 
-                                        style={{ width: `${item.percent}%` }}
-                                     ></div>
-                                 </div>
-                                 <p className="text-xs text-slate-400 text-left mt-0.5 dir-ltr">{item.percent.toFixed(1)}%</p>
-                             </div>
-                        ))}
-                     </div>
-                 ) : (
-                     <div className="h-full flex flex-col items-center justify-center text-slate-400 py-8 md:py-0">
-                         <ChartPieIcon className="h-12 w-12 mb-2 opacity-20" />
-                         <p>مازال ما صرفتي والو ف{
-                            view === 'daily' ? 'هاد النهار' : view === 'monthly' ? 'هاد الشهر' : 'هاد العام'
-                         }.</p>
-                     </div>
-                 )}
+          ) : (
+            <div className="h-full flex flex-col items-center justify-center text-slate-400 py-8 md:py-0">
+              <ChartPieIcon className="h-12 w-12 mb-2 opacity-20" />
+              <p>مازال ما صرفتي والو ف{
+                view === 'daily' ? 'هاد النهار' : view === 'monthly' ? 'هاد الشهر' : 'هاد العام'
+              }.</p>
             </div>
+          )}
         </div>
+      </div>
 
-        {/* Mini Insight Footer */}
-        {chartData.data.length > 0 && (
-            <div className="mt-6 pt-4 border-t border-slate-100 text-center">
-                <p className="text-sm text-slate-500">
-                    أكبر مصروف هو <span className={`font-bold ${chartData.data[0].colorClass}`}>{chartData.data[0].category}</span> بـ <span className="font-bold text-slate-800">{chartData.data[0].value.toFixed(0)} درهم</span>.
-                </p>
-            </div>
-        )}
+      {/* Mini Insight Footer */}
+      {chartData.data.length > 0 && (
+        <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+          <p className="text-sm text-slate-500">
+            أكبر مصروف هو <span className={`font-bold ${chartData.data[0].colorClass}`}>{chartData.data[0].category}</span> بـ <span className="font-bold text-slate-800">{chartData.data[0].value.toFixed(0)} درهم</span>.
+          </p>
+        </div>
+      )}
     </Card>
   );
 };
